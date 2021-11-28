@@ -24,17 +24,17 @@ let getGameBounds consoleInput defaultLower defaultUpper =
 
 let compare guess answer lowerBound upperBound =
     match guess with 
-    | _ when guess < lowerBound -> (false, $"That guess is below {lowerBound}, dummy!")
-    | _ when guess > upperBound -> (false, $"That guess is above {upperBound}, dummy!")
-    | _ when guess < answer -> (false, $"{guess} is too low!")
-    | _ when guess > answer -> (false, $"{guess} is too high!") 
-    | _ -> (true, $"{guess} is the correct answer!")
+    | guess when guess < lowerBound -> (false, $"{guess} is below {lowerBound}!")
+    | guess when guess > upperBound -> (false, $"{guess} is above {upperBound}!")
+    | guess when guess < answer -> (false, $"{guess} is too low!")
+    | guess when guess > answer -> (false, $"{guess} is too high!") 
+    | guess -> (true, $"{guess} is the correct answer!")
 
 let rec getNumberGuess correctAnswer lowerBound upperBound=
     printf "Your guess: "
     match parseInt (Console.ReadLine()) with 
     | None -> 
-        printToConsole "You need to guess integers, dummy!"
+        printToConsole "You need to guess integers!"
         getNumberGuess correctAnswer lowerBound upperBound
     | Some guess  -> 
         match compare guess correctAnswer lowerBound upperBound with 
