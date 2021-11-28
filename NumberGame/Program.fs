@@ -18,9 +18,9 @@ let parseValidInputArguments consoleInput =
 let getGameBounds consoleInput defaultLower defaultUpper =
     let parsedConsoleInput = parseValidInputArguments consoleInput        
     match parsedConsoleInput.Length with 
-    | 1 -> (defaultLower, parsedConsoleInput.[0]) // If only one input is provided, this is considered the upper bound
-    | 2 -> (parsedConsoleInput.[0], parsedConsoleInput.[1]) // Of two inputs are provided, both are used
-    | _ -> (defaultLower, defaultUpper) // Otherwise, the default of range between 0 and 100 is used
+    | 1 -> (defaultLower, parsedConsoleInput.[0]) 
+    | 2 -> (parsedConsoleInput.[0], parsedConsoleInput.[1]) 
+    | _ -> (defaultLower, defaultUpper) 
 
 let compare guess answer lowerBound upperBound =
     match guess with 
@@ -49,4 +49,4 @@ let main argv =
     let correctAnswer = ((Random()).Next(lowerBound, upperBound)) 
     printToConsole $"I am thinking of a number between {lowerBound} and {upperBound}... guess it!"  
     printToConsole (getNumberGuess correctAnswer lowerBound upperBound)
-    0 // return an integer exit code
+    0 
