@@ -1,6 +1,10 @@
 type GuessResult = | BelowLowerBound | BelowAnswer | Correct | AboveUpperBound | AboveAnswer 
 
-let printToConsole message = printfn "%s "message
+type GuessInput = int * int * int * int 
+
+/// TODO: Add single case union types for self-documenting code
+
+let printToConsole (message: string) = printfn "%s "message
     
 let parseInt (str: string) = 
     match System.Int32.TryParse str with 
@@ -13,23 +17,19 @@ let parseValidInputArguments (input: string[]) =
     |> List.map (fun v -> parseInt v) |> List.filter(fun v -> v.IsSome) |> List.map(fun v -> v.Value) 
     |> List.sort
 
-let getGameBounds consoleInput defaultLower defaultUpper =
+let getGameBounds (consoleInput: string[]) (defaultLower: int) (defaultUpper: int) =
     let parsedConsoleInput = parseValidInputArguments consoleInput        
     match parsedConsoleInput.Length with 
     | 1 when parsedConsoleInput.[0] > defaultLower -> (defaultLower, parsedConsoleInput.[0]) 
     | 2 -> (parsedConsoleInput.[0], parsedConsoleInput.[1]) 
     | _ -> (defaultLower, defaultUpper) 
 
-let checkGuess (guess: int) (answer: int) (bounds: int*int) : GuessResult =
-    match (guess, answer) with 
-    | (guess, answer) when guess > answer ->
-        match (guess, snd bounds) with 
-        | (guess, upperBound) when guess > upperBound -> AboveUpperBound
-        | _ -> AboveAnswer
-    | (guess, answer) when guess < answer ->
-        match (guess, fst bounds) with 
-        | (guess, lowerBound) when guess < lowerBound -> BelowLowerBound 
-        | _ -> BelowAnswer
+let checkGuess (input: GuessInput): GuessResult = 
+    match input with 
+    | (guess, _, lowerBound, _) when guess < lowerBound -> BelowLowerBound
+    | (guess, answer, _, _) when guess < answer -> BelowAnswer
+    | (guess, _, _, upperBound) when guess > upperBound -> AboveUpperBound
+    | (guess, answer, _, _) when guess > answer -> AboveAnswer
     | _ -> Correct
 
 let resultString (result: GuessResult) = 
@@ -42,21 +42,20 @@ let resultString (result: GuessResult) =
 
 let displayResult (result: GuessResult) = resultString result |> printToConsole
 
-let rec getNumberGuess (correctAnswer: int) (bounds: int*int) =
+let rec guessNumber (correctAnswer: int) (bounds: int*int) (statusMessage: string) =
+    printf "%s\nYour guess: " statusMessage
     match parseInt (System.Console.ReadLine()) with 
     | None -> 
-        printToConsole "You need to guess integers!"
-        getNumberGuess correctAnswer bounds
+        guessNumber correctAnswer bounds "You need to guess integers!"
     | Some guess  -> 
-        let guessResult = checkGuess guess correctAnswer bounds
-        displayResult guessResult
-        match guessResult with 
-        | Correct -> 0
-        | _ -> getNumberGuess correctAnswer bounds
+        match checkGuess (guess, correctAnswer, fst bounds, snd bounds) with 
+        | Correct -> resultString Correct
+        | other -> guessNumber correctAnswer bounds (resultString other)
 
 [<EntryPoint>]
 let main argv =
     let bounds = getGameBounds argv 1 50
     let correctAnswer = ((System.Random()).Next(fst bounds, snd bounds)) 
-    printToConsole $"I am thinking of a number between {fst bounds} and {snd bounds}... guess it!"  
-    getNumberGuess correctAnswer bounds
+    guessNumber correctAnswer bounds $"I am thinking of a number between {fst bounds} and {snd bounds}... guess it!" 
+    |> printToConsole
+    0
