@@ -9,6 +9,7 @@
     <Compile Include="01/Day1.fs" />
     <Compile Include="02/Day2.fs" />
     <Compile Include="03/Day3.fs" />
+    <Compile Include="04/Day4.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
