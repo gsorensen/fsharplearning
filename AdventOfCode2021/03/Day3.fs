@@ -13,7 +13,7 @@ let greaterThanOrEqual a b = a >= b
 let lessThan a b = a < b
 
 let isGreaterThanOrEqualBinary a b = 
-    match a >= (b / 2) with 
+    match a >= int(ceil(b/2.0)) with 
     | true -> 1
     | false -> 0
 
@@ -57,47 +57,46 @@ let puzzle1 (puzzleData: int list list) =
     let epsilonRate = System.Convert.ToInt32(epsilonRateBinaryString, 2)
     gammaRate * epsilonRate
 
-let findMostCommonBitInEachPosition (comparator: int -> int -> bool) (data: int list list) : int list =
+let findMostCommonBitInEachPosition (data: int list list) : int list =
     data
     |> List.reduce (List.map2 (+))  
-    |> List.map (fun v -> match comparator v (data.Length/2) with | true -> 1 | false -> 0)
+    |> List.map (fun v -> isGreaterThanOrEqualBinary v data.Length)
 
-let findLeastCommonBitInEachPosition (comparator: int -> int -> bool) (data: int list list) : int list =
+let findLeastCommonBitInEachPosition (data: int list list) : int list =
     data 
-    |> List.reduce (List.map2 (+))
-    |> List.map (fun v -> match comparator v (data.Length/2) with | true -> 1 | false -> 0)
+    |> findMostCommonBitInEachPosition 
+    |> List.map(fun b -> binaryFlip b)
 
-let rec determineRatingRec (idx: int) (bits: int list) (measurements: int list list) = 
+let rec determineRatingRec (idx: int) (filterFunc: int list list -> int list)(measurements: int list list) = 
+    // Need to find the most common bit for the filtered list
+    let bits = measurements |> filterFunc
     match (idx = bits.Length || measurements.Length = 1) with 
     | true ->  measurements[0]
     | false -> 
         measurements
         |> List.filter (fun v -> v[idx] = bits[idx])
-        |> determineRatingRec (idx + 1) bits 
+        |> determineRatingRec (idx + 1) filterFunc
 
 let getDecimalValueFromBinaryIntList (l: int list) = 
     let binaryString = l |> List.map(fun s -> s.ToString()) |> List.fold (fun str s -> str + s) ""
     System.Convert.ToInt32(binaryString, 2)
 
-let determineOxygenRating (measurements: int list list) (msb: int list)  = 
+let determineOxygenRating (measurements: int list list)  = 
     measurements
-    |> determineRatingRec 0 msb  
+    |> determineRatingRec 0 findMostCommonBitInEachPosition
 
-let determineCO2ScrubberRating (measurements: int list list) (lsb: int list) =
+let determineCO2ScrubberRating (measurements: int list list) =
     measurements 
-    |> determineRatingRec 0 lsb 
+    |> determineRatingRec 0 findLeastCommonBitInEachPosition
 
 let oxygenRating (measurements: int list list) = 
     measurements 
-    |> findMostCommonBitInEachPosition greaterThanOrEqual
-    |> determineOxygenRating measurements
+    |> determineOxygenRating 
     |> getDecimalValueFromBinaryIntList
 
 let co2ScrubberRating (measurements: int list list) =
     measurements 
-    |> findMostCommonBitInEachPosition greaterThanOrEqual
-    |> List.map (fun b -> binaryFlip b)
-    |> determineCO2ScrubberRating measurements 
+    |> determineCO2ScrubberRating 
     |> getDecimalValueFromBinaryIntList
 
 let puzzle2 (puzzleData: int list list) = 

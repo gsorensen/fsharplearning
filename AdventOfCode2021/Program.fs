@@ -5,8 +5,7 @@ open Day3
 
 [<EntryPoint>]
 let main argv =
-    let puzzleData = "03/test.txt" |> Day3.readPuzzleInputFromFile 
-    // let puzzleData = "03/diagnostics_report.txt" |> Day3.readPuzzleInputFromFile 
+    let puzzleData = "03/diagnostics_report.txt" |> Day3.readPuzzleInputFromFile 
     Day3.puzzle1 puzzleData |> printfn "%d"
     Day3.puzzle2 puzzleData |> printfn "%d"
     0 // return an integer exit code
