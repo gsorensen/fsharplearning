@@ -54,8 +54,66 @@ let parseBingoBoards (numbersDrawnAndRawBoards: int list * string list)  : int l
 let createGameRecordFromParsedInput (numbersDrawnAndBingoBoards: int list * BingoBoard list): Game =
     {NumbersDrawn = fst numbersDrawnAndBingoBoards; BingoBoards = snd numbersDrawnAndBingoBoards}
 
+let markIfEqual (b: BingoNumber) (value: int) =
+    match (b, value) with 
+    | (BingoNumber (bValue, false), value) when bValue = value -> BingoNumber(bValue, true)
+    | _ -> b
+
+let markNumberInBoard (number: int) (board: BingoBoard) : BingoBoard =
+    match board with 
+    | BingoBoard bingoNumbers ->
+        bingoNumbers
+        |> List.map(fun r -> r |> List.map (fun c -> markIfEqual c number))
+        |> BingoBoard
+
+let markNumbersInBoards (number: int) (boards: BingoBoard list) : BingoBoard list =
+    boards |> List.map(fun b -> b |> markNumberInBoard number)
+
+let add1IfTrue (b: BingoNumber) =
+    match b with 
+    | BingoNumber (_, true) -> 1
+    | _ ->0
+
+let rec checkBingoColumnWise (rowNumber: int) (board: BingoBoard) : bool =
+    let (BingoBoard bingoNumbers) = board 
+    match rowNumber >= bingoNumbers.Length with
+    | true -> false 
+    | false -> 
+        match (bingoNumbers[rowNumber]|> List.map(fun v -> add1IfTrue v)|> List.sum) = 5 with 
+        | true -> true 
+        | false -> checkBingoColumnWise (rowNumber + 1) board 
+       
+let rec checkBingoRowWise (colNumber: int) (board: BingoBoard) : bool = 
+    let (BingoBoard bingoNumbers) = board 
+    match colNumber >= bingoNumbers.Length with 
+    | true -> false 
+    | false -> 
+        let column = bingoNumbers[colNumber][*]
+        false
+
+
+let hasBingo (board: BingoBoard) : bool =
+    (checkBingoColumnWise 0 board) || (checkBingoRowWise 0 board) 
+
+let sumOfUnmarkedNumbers (board: BingoBoard) : int = 
+    // board |> List.filter(fun v -> List.filter(fun w -> (snd w = true))) |> List.map (fun v -> snd v) |> List.sum
+    1
+
+let rec drawNumberAndCheckForWinner (numbersDrawn: int) (game: Game) : BingoBoard option * int option =
+    match numbersDrawn >= game.NumbersDrawn.Length with 
+    | true -> (None, None) 
+    | false -> 
+        let markedBoards = markNumbersInBoards (game.NumbersDrawn[numbersDrawn]) game.BingoBoards
+        let boardWithBingo = markedBoards |> List.tryFind(fun b -> hasBingo b)
+        match boardWithBingo with 
+        | Some board -> (Some board, Some game.NumbersDrawn[numbersDrawn])
+        | None -> drawNumberAndCheckForWinner (numbersDrawn + 1) {game with BingoBoards = markedBoards}
+
 let determineFirstWinnerAndReturnFinalScore (game: Game) : int = 
-    0
+    let winningBoardAndNumber = drawNumberAndCheckForWinner 0 game 
+    match (fst winningBoardAndNumber, snd winningBoardAndNumber) with 
+    | (Some winningBoard, Some winningNumber) -> (sumOfUnmarkedNumbers winningBoard) * winningNumber
+    | _ -> -1
 
 let puzzle1 puzzleData =
     puzzleData 
