@@ -4,7 +4,7 @@ open System
 open System.Text.RegularExpressions
 
 type BingoNumber = BingoNumber of int*bool
-type BingoBoard = BingoBoard of BingoNumber list list 
+type BingoBoard = BingoBoard of BingoNumber list list
 
 type Game = {
     NumbersDrawn: int list;
@@ -32,18 +32,19 @@ let parseNumbersDrawn (puzzleData: string list) : int list * string list =
 
 let bingoNumbersFromString (s: string) =
     Regex.Split(s, " ") 
+    |> Array.map (fun s -> intFrom s)
+    |> Array.filter (fun v -> v.IsSome)
+    |> Array.map (fun v -> v.Value)
+    |> Array.map (fun v -> BingoNumber(v, false))
     |> Array.toList
-    |> List.map (fun s -> intFrom s)
-    |> List.filter (fun v -> v.IsSome)
-    |> List.map (fun v -> v.Value)
-    |> List.map (fun v -> BingoNumber(v, false))
 
-let bingoBoardFromStringList (rawInput: string list) = 
+let bingoBoardFromStringList (rawInput: string list) =
     rawInput 
     |> List.map (fun s -> bingoNumbersFromString s)
-
+    |> BingoBoard    
+    
 let rec bingoBoardsFromStringList (bingoBoards: BingoBoard list) (idx: int) (rawData: string list) : BingoBoard list =
-    let newBingoBoard = rawData[idx+1..idx+5] |> bingoBoardFromStringList |> BingoBoard
+    let newBingoBoard = rawData[idx+1..idx+5] |> bingoBoardFromStringList 
     match idx+6 > rawData.Length with 
     | true -> (newBingoBoard::bingoBoards).Tail
     | false -> bingoBoardsFromStringList (newBingoBoard::bingoBoards) (idx+6) rawData
@@ -63,7 +64,7 @@ let markNumberInBoard (number: int) (board: BingoBoard) : BingoBoard =
     match board with 
     | BingoBoard bingoNumbers ->
         bingoNumbers
-        |> List.map(fun r -> r |> List.map (fun c -> markIfEqual c number))
+        |> List.map(fun r -> r |> List.map (fun v  -> markIfEqual v number))
         |> BingoBoard
 
 let markNumbersInBoards (number: int) (boards: BingoBoard list) : BingoBoard list =
@@ -75,22 +76,12 @@ let add1IfTrue (b: BingoNumber) =
     | _ ->0
 
 let rec checkBingoColumnWise (rowNumber: int) (board: BingoBoard) : bool =
-    let (BingoBoard bingoNumbers) = board 
-    match rowNumber >= bingoNumbers.Length with
-    | true -> false 
-    | false -> 
-        match (bingoNumbers[rowNumber]|> List.map(fun v -> add1IfTrue v)|> List.sum) = 5 with 
-        | true -> true 
-        | false -> checkBingoColumnWise (rowNumber + 1) board 
+    let (BingoBoard b) = board 
+    let boardArray = b |> array2D
+    true
        
 let rec checkBingoRowWise (colNumber: int) (board: BingoBoard) : bool = 
-    let (BingoBoard bingoNumbers) = board 
-    match colNumber >= bingoNumbers.Length with 
-    | true -> false 
-    | false -> 
-        let column = bingoNumbers[colNumber][*]
-        false
-
+    false  
 
 let hasBingo (board: BingoBoard) : bool =
     (checkBingoColumnWise 0 board) || (checkBingoRowWise 0 board) 
